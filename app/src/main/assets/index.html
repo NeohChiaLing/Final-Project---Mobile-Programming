@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#8b5cf6"> <title>FitTrack</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            light: '#a78bfa', // 浅紫
+                            DEFAULT: '#8b5cf6', // 标准紫
+                            dark: '#7c3aed', // 深紫
+                        },
+                        accent: {
+                            blue: '#3b82f6',
+                            cyan: '#06b6d4',
+                            orange: '#f97316'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        /* Smooth Page Fade */
+        .page { display: none; animation: fadeIn 0.3s ease-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Icon Pop Animation */
+        .nav-icon-active { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #8b5cf6 !important; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col overflow-hidden">
+
+<section id="home" class="page active flex-1 overflow-y-auto no-scrollbar pb-24 relative bg-gray-50">
+
+    <div class="relative bg-gradient-to-br from-brand-light via-brand to-brand-dark text-white p-6 pt-16 pb-16 rounded-b-[3rem] shadow-xl overflow-hidden">
+
+        <div class="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -mb-12 -ml-6 w-32 h-32 bg-brand-light opacity-20 rounded-full blur-2xl"></div>
+
+        <div class="relative z-10 flex justify-between items-start mb-8">
+            <div>
+                <p class="text-white/80 text-sm font-medium mb-1">Welcome back,</p>
+                <h1 class="text-3xl font-extrabold tracking-tight">Mary Smith</h1>
+            </div>
+            <div onclick="nav('profile')" class="w-12 h-12 rounded-full p-0.5 bg-white/30 cursor-pointer hover:bg-white/50 transition duration-300 shadow-sm ring-2 ring-white/20">
+                <img src="https://i.pravatar.cc/100?img=5" class="rounded-full w-full h-full object-cover border-2 border-white">
+            </div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 flex items-center justify-between relative z-10 mb-2">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fa-solid fa-shoe-prints text-2xl text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-white/80 font-medium">Steps Today</p>
+                    <h2 class="text-3xl font-bold text-white">5,432</h2>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-white/70 mb-1">Goal: 10k</p>
+                <div class="w-16 h-1.5 bg-black/20 rounded-full overflow-hidden">
+                    <div class="bg-white h-full w-[54%] rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-5 space-y-5 relative z-20 -mt-8">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800">320</p>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Calories</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                <div class="w-10 h-10 rounded-full bg-cyan-100 text-cyan-500 flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-droplet"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800">1.2L</p>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Water</p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-yellow-50 text-yellow-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-sun text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-gray-800">Daily Insight</h3>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5">Sunny • Stay hydrated today!</p>
+                </div>
+            </div>
+            <button class="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 hover:text-brand hover:bg-brand/10 transition">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+
+        <div>
+            <h3 class="font-bold text-lg mb-3 px-1">Quick Actions</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="nav('add')" class="bg-brand text-white p-4 rounded-2xl shadow-lg shadow-brand/30 flex items-center justify-between group active:scale-95 transition-all">
+                    <span class="text-sm font-bold">Log Activity</span>
+                    <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center group-hover:rotate-90 transition">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                </button>
+                <button onclick="nav('history')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group active:scale-95 transition-all hover:border-brand/30">
+                    <span class="text-sm font-bold text-gray-700">View History</span>
+                    <div class="bg-gray-100 text-gray-400 w-8 h-8 rounded-full flex items-center justify-center group-hover:text-brand transition">
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="add" class="page flex-1 overflow-y-auto no-scrollbar relative pb-24 bg-gray-50">
+
+    <div class="bg-gradient-to-br from-brand-light to-brand text-white p-6 pt-16 pb-10 rounded-b-[2.5rem] shadow-lg mb-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full bg-white opacity-5 pattern-dots"></div>
+        <div class="relative z-10 flex items-center">
+            <h2 class="text-2xl font-extrabold">New Record</h2>
+        </div>
+    </div>
+
+    <form onsubmit="event.preventDefault(); alert('Saved!'); nav('history');" class="space-y-5 px-6">
+        <div class="bg-white p-2 rounded-2xl border border-gray-100 focus-within:border-brand/50 transition shadow-sm">
+            <label class="text-xs font-bold text-gray-400 uppercase px-3">Date</label>
+            <input type="date" class="w-full p-3 bg-transparent border-none focus:ring-0 font-medium text-gray-700">
+        </div>
+
+        <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Activity Type</label>
+            <div class="grid grid-cols-3 gap-3">
+                <button type="button" class="p-4 rounded-2xl border-2 border-brand bg-brand/10 text-brand font-bold text-sm shadow-sm">Run</button>
+                <button type="button" class="p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Yoga</button>
+                <button type="button" class="p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Gym</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Duration (min)</label>
+                <input type="number" class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Calories</label>
+                <input type="number" class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Water Intake</label>
+            <div class="flex items-center gap-4">
+                <i class="fa-solid fa-faucet-drip text-accent-cyan text-xl"></i>
+                <input type="range" class="w-full accent-accent-cyan h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="2000">
+            </div>
+        </div>
+
+        <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Mood</label>
+            <select class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 focus:ring-brand focus:border-brand shadow-sm">
+                <option>Happy 😊</option>
+                <option>Tired 😴</option>
+                <option>Strong 💪</option>
+                <option>Neutral 😐</option>
+            </select>
+        </div>
+
+        <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Notes</label>
+            <textarea class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 h-24 resize-none focus:ring-brand focus:border-brand shadow-sm" placeholder="Add details here..."></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 pt-2">
+            <button type="button" class="p-4 border-2 border-dashed border-gray-300 bg-white rounded-2xl text-gray-400 font-bold text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition flex items-center justify-center gap-2"><i class="fa-solid fa-camera"></i> Photo</button>
+            <button type="button" class="p-4 border-2 border-dashed border-gray-300 bg-white rounded-2xl text-gray-400 font-bold text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition flex items-center justify-center gap-2"><i class="fa-solid fa-location-dot"></i> GPS</button>
+        </div>
+
+        <button type="submit" class="w-full bg-brand text-white font-bold py-4 rounded-2xl shadow-xl shadow-brand/30 mt-6 active:scale-95 transition text-lg">Save Activity</button>
+    </form>
+</section>
+
+<section id="history" class="page flex-1 overflow-y-auto no-scrollbar relative pb-24 bg-gray-50">
+
+    <div class="bg-gradient-to-br from-brand-light to-brand text-white p-6 pt-16 pb-8 rounded-b-[2.5rem] shadow-lg mb-4">
+        <h2 class="text-2xl font-extrabold mb-4">History</h2>
+        <div class="bg-white/20 backdrop-blur-md p-2 rounded-2xl border border-white/30 flex items-center gap-2 pl-4 focus-within:bg-white/30 transition">
+            <i class="fa-solid fa-magnifying-glass text-white/70"></i>
+            <input type="text" placeholder="Search activities..." class="bg-transparent w-full focus:outline-none text-sm font-medium text-white placeholder-white/60 py-2">
+        </div>
+    </div>
+
+    <div class="space-y-4 px-6 mt-4">
+        <div onclick="nav('details')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer group hover:border-brand/30 transition active:scale-[0.98]">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition">
+                    <i class="fa-solid fa-person-swimming"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg text-gray-800 mb-1">Swimming</h4>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                        <span><i class="fa-regular fa-calendar mr-1"></i>Yesterday</span>
+                        <span>•</span>
+                        <span><i class="fa-regular fa-clock mr-1"></i>45 mins</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="block font-extrabold text-brand text-lg">320</span>
+                <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer group hover:border-accent-orange/30 transition active:scale-[0.98]">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-500 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition">
+                    <i class="fa-solid fa-person-biking"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg text-gray-800 mb-1">Cycling</h4>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                        <span><i class="fa-regular fa-calendar mr-1"></i>Oct 24</span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-route mr-1"></i>12km</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="block font-extrabold text-accent-orange text-lg">450</span>
+                <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="details" class="page flex-1 overflow-y-auto no-scrollbar bg-white relative pb-24">
+
+    <div class="h-80 bg-gray-200 relative">
+        <img src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+
+        <button onclick="nav('history')" class="absolute top-12 left-6 w-10 h-10 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white flex items-center justify-center z-50">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div class="absolute bottom-10 left-6 text-white z-20">
+            <div class="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block mb-3 shadow-sm border border-white/20">Swimming</div>
+            <h1 class="text-4xl font-extrabold mb-2">Morning Swim</h1>
+            <p class="text-sm opacity-90 font-medium flex items-center"><i class="fa-solid fa-location-dot mr-2 text-brand-light"></i> City Sports Complex</p>
+        </div>
+    </div>
+
+    <div class="p-6 bg-white relative z-10 rounded-t-[2.5rem] -mt-8">
+
+        <div class="flex justify-between mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-center flex-1 border-r border-gray-200">
+                <i class="fa-regular fa-clock text-brand mb-2 text-xl"></i>
+                <p class="font-extrabold text-xl text-gray-800 leading-none">45<span class="text-sm font-medium text-gray-500 ml-1">m</span></p>
+            </div>
+            <div class="text-center flex-1 border-r border-gray-200">
+                <i class="fa-solid fa-fire-flame-curved text-accent-orange mb-2 text-xl"></i>
+                <p class="font-extrabold text-xl text-gray-800 leading-none">320</p>
+            </div>
+            <div class="text-center flex-1">
+                <span class="text-3xl mb-1 block">😄</span>
+                <p class="font-bold text-sm text-gray-600">Mood</p>
+            </div>
+        </div>
+
+        <h3 class="font-bold text-lg mb-3 text-gray-800 px-1">Notes</h3>
+        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 mb-8">
+            <p class="text-gray-600 text-sm leading-relaxed font-medium">Felt great today! The water was perfect. Improved lap time by 5 seconds on the freestyle set.</p>
+        </div>
+
+        <div class="flex gap-4">
+            <button class="flex-1 bg-brand text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 active:scale-95 transition">
+                <i class="fa-solid fa-pen-to-square"></i> Update Record
+            </button>
+            <button class="w-16 bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center text-xl hover:bg-red-100 transition active:scale-95">
+                <i class="fa-regular fa-trash-can"></i>
+            </button>
+        </div>
+    </div>
+</section>
+
+<section id="profile" class="page flex-1 overflow-y-auto no-scrollbar relative pb-24 bg-gray-50">
+
+    <div class="bg-gradient-to-br from-brand-light to-brand text-white p-6 pt-16 pb-20 rounded-b-[3rem] shadow-lg relative mb-[-3rem]">
+        <div class="flex justify-between items-center relative z-10">
+            <h2 class="text-2xl font-extrabold">Profile</h2>
+            <i class="fa-solid fa-gear text-xl opacity-80"></i>
+        </div>
+    </div>
+
+    <div class="px-6 relative z-10">
+        <div class="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 flex flex-col items-center gap-3 text-center mb-8">
+            <div class="relative -mt-16">
+                <img src="https://i.pravatar.cc/100?img=5" class="w-24 h-24 rounded-full border-[6px] border-white shadow-md">
+                <div class="absolute bottom-0 right-0 bg-brand text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white text-xs shadow-sm"><i class="fa-solid fa-pen"></i></div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-extrabold text-gray-800">Mary Smith</h3>
+                <p class="text-gray-400 text-sm font-medium">mary.smith@example.com</p>
+            </div>
+            <div class="flex gap-3 mt-2 text-sm font-bold text-gray-600 w-full justify-center">
+                <div class="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 min-w-[80px]">165 cm</div>
+                <div class="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 min-w-[80px]">60 kg</div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-100 p-5 rounded-[2rem] shadow-sm mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800 mb-1">Weekly Progress</h3>
+                    <p class="text-xs font-medium text-gray-500">Calories Burned</p>
+                </div>
+            </div>
+            <div class="relative h-56 w-full">
+                <canvas id="fitnessChart"></canvas>
+            </div>
+        </div>
+
+        <div class="space-y-3 pb-8">
+            <button class="w-full bg-white flex items-center justify-between p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-brand/30 transition group">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-moon"></i></div>
+                    <span class="font-bold text-sm text-gray-700">Dark Mode</span>
+                </div>
+                <div class="w-12 h-7 bg-gray-200 rounded-full relative transition group-hover:bg-gray-300"><div class="w-5 h-5 bg-white rounded-full shadow-sm absolute left-1 top-1 transition-all"></div></div>
+            </button>
+
+            <button class="w-full bg-white flex items-center justify-between p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-brand/30 transition group">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-bell"></i></div>
+                    <span class="font-bold text-sm text-gray-700">Notifications</span>
+                </div>
+                <div class="w-12 h-7 bg-brand rounded-full relative"><div class="w-5 h-5 bg-white rounded-full shadow-sm absolute right-1 top-1"></div></div>
+            </button>
+        </div>
+    </div>
+</section>
+
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2 flex justify-between items-end z-50 pb-6 shadow-[0_-5px_25px_rgba(0,0,0,0.03)]">
+
+    <button onclick="nav('home')" class="nav-btn w-14 flex flex-col items-center gap-1.5 group transition-all rounded-2xl p-1" data-target="home">
+        <i class="fa-solid fa-house text-xl text-gray-300 group-hover:text-brand transition-colors"></i>
+        <span class="text-[10px] text-gray-400 font-semibold transition-colors">Home</span>
+    </button>
+
+    <button onclick="nav('history')" class="nav-btn w-14 flex flex-col items-center gap-1.5 group transition-all rounded-2xl p-1" data-target="history">
+        <i class="fa-solid fa-list-check text-xl text-gray-300 group-hover:text-brand transition-colors"></i>
+        <span class="text-[10px] text-gray-400 font-semibold transition-colors">History</span>
+    </button>
+
+    <div class="relative -top-8">
+        <button onclick="nav('add')" class="bg-gradient-to-br from-brand-light to-brand text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl shadow-brand/40 border-[5px] border-gray-50 active:scale-95 transition transform hover:rotate-90 hover:scale-105">
+            <i class="fa-solid fa-plus text-2xl"></i>
+        </button>
+    </div>
+
+    <button onclick="nav('details')" class="nav-btn w-14 flex flex-col items-center gap-1.5 group transition-all rounded-2xl p-1" data-target="details">
+        <i class="fa-regular fa-file-lines text-xl text-gray-300 group-hover:text-brand transition-colors"></i>
+        <span class="text-[10px] text-gray-400 font-semibold transition-colors">Latest</span>
+    </button>
+
+    <button onclick="nav('profile')" class="nav-btn w-14 flex flex-col items-center gap-1.5 group transition-all rounded-2xl p-1" data-target="profile">
+        <i class="fa-regular fa-user text-xl text-gray-300 group-hover:text-brand transition-colors"></i>
+        <span class="text-[10px] text-gray-400 font-semibold transition-colors">Profile</span>
+    </button>
+</nav>
+
+<script>
+    function nav(pageId) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('span');
+            if(icon) {
+                icon.classList.remove('nav-icon-active', 'text-brand');
+                icon.classList.add('text-gray-300');
+            }
+            if(text) {
+                 text.classList.remove('text-brand');
+                 text.classList.add('text-gray-400');
+            }
+
+            if(btn.dataset.target === pageId) {
+                if(icon) {
+                    icon.classList.remove('text-gray-300');
+                    icon.classList.add('nav-icon-active', 'text-brand');
+                }
+                if(text) {
+                     text.classList.remove('text-gray-400');
+                     text.classList.add('text-brand');
+                }
+            }
+        });
+        window.scrollTo(0,0);
+    }
+
+    const ctx = document.getElementById('fitnessChart').getContext('2d');
+    let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.2)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Calories',
+                data: [150, 480, 200, 550, 320, 600, 400],
+                borderColor: '#8b5cf6',
+                borderWidth: 3,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#8b5cf6',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10, weight: '500' }, color: '#9ca3af' } },
+                y: { display: false, min: 0 }
+            },
+            layout: { padding: { top: 10, bottom: 10, left: -10, right: -10 } }
+        }
+    });
+
+    nav('home');
+</script>
+</body>
+</html>
