@@ -16,9 +16,9 @@
                 extend: {
                     colors: {
                         brand: {
-                            light: '#a78bfa', // 浅紫
-                            DEFAULT: '#8b5cf6', // 标准紫
-                            dark: '#7c3aed', // 深紫
+                            light: '#a78bfa',
+                            DEFAULT: '#8b5cf6',
+                            dark: '#7c3aed',
                         },
                         accent: {
                             blue: '#3b82f6',
@@ -58,9 +58,32 @@
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
+
+        /* TOAST NOTIFICATION ANIMATION */
+        #toast {
+            transition: transform 0.3s ease-in-out, opacity 0.3s;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen flex flex-col overflow-hidden">
+
+<div id="toast" class="fixed top-0 left-0 right-0 z-[100] p-4 flex justify-center pointer-events-none">
+    <div id="toastCard" class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4 min-w-[300px] pointer-events-auto">
+        <div id="toastIcon" class="w-10 h-10 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h4 id="toastTitle" class="font-bold text-gray-800 text-sm">Success</h4>
+            <p id="toastMessage" class="text-xs text-gray-500 font-medium">Action completed successfully.</p>
+        </div>
+    </div>
+</div>
 
 <section id="home" class="page active flex-1 overflow-y-auto no-scrollbar pb-24 relative bg-gray-50">
 
@@ -161,50 +184,55 @@
         </div>
     </div>
 
-    <form onsubmit="event.preventDefault(); alert('Saved!'); nav('history');" class="space-y-5 px-6">
+    <form id="addForm" onsubmit="saveActivity(event)" class="space-y-5 px-6">
+        <input type="hidden" id="editId" value="">
+
         <div class="bg-white p-2 rounded-2xl border border-gray-100 focus-within:border-brand/50 transition shadow-sm">
             <label class="text-xs font-bold text-gray-400 uppercase px-3">Date</label>
-            <input type="date" class="w-full p-3 bg-transparent border-none focus:ring-0 font-medium text-gray-700">
+            <input type="date" id="dateInput" required class="w-full p-3 bg-transparent border-none focus:ring-0 font-medium text-gray-700">
         </div>
 
-        <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Activity Type</label>
+        <div>
+            <label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Activity Type</label>
+            <input type="hidden" id="typeInput" value="Run">
             <div class="grid grid-cols-3 gap-3">
-                <button type="button" class="p-4 rounded-2xl border-2 border-brand bg-brand/10 text-brand font-bold text-sm shadow-sm">Run</button>
-                <button type="button" class="p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Yoga</button>
-                <button type="button" class="p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Gym</button>
+                <button type="button" onclick="selectType(this, 'Run')" class="type-btn p-4 rounded-2xl border-2 border-brand bg-brand/10 text-brand font-bold text-sm shadow-sm">Run</button>
+                <button type="button" onclick="selectType(this, 'Yoga')" class="type-btn p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Yoga</button>
+                <button type="button" onclick="selectType(this, 'Gym')" class="type-btn p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-brand/50 transition">Gym</button>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                 <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Duration (min)</label>
-                <input type="number" class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
+                <input type="number" id="durationInput" required class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
             </div>
             <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                 <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Calories</label>
-                <input type="number" class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
+                <input type="number" id="caloriesInput" required class="w-full bg-transparent border-none p-0 font-extrabold text-2xl text-gray-800 focus:ring-0" placeholder="0">
             </div>
         </div>
 
         <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Water Intake</label>
+            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Water Intake (ml)</label>
             <div class="flex items-center gap-4">
                 <i class="fa-solid fa-faucet-drip text-accent-cyan text-xl"></i>
-                <input type="range" class="w-full accent-accent-cyan h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="2000">
+                <input type="range" id="waterInput" class="w-full accent-accent-cyan h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="2000" oninput="document.getElementById('waterDisplay').innerText = this.value + 'ml'">
+                <span id="waterDisplay" class="text-xs font-bold text-gray-500 w-12">1000ml</span>
             </div>
         </div>
 
         <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Mood</label>
-            <select class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 focus:ring-brand focus:border-brand shadow-sm">
-                <option>Happy 😊</option>
-                <option>Tired 😴</option>
-                <option>Strong 💪</option>
-                <option>Neutral 😐</option>
+            <select id="moodInput" class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 focus:ring-brand focus:border-brand shadow-sm">
+                <option value="Happy">Happy 😊</option>
+                <option value="Tired">Tired 😴</option>
+                <option value="Strong">Strong 💪</option>
+                <option value="Neutral">Neutral 😐</option>
             </select>
         </div>
 
         <div><label class="text-xs font-bold text-gray-400 uppercase px-2 mb-2 block">Notes</label>
-            <textarea class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 h-24 resize-none focus:ring-brand focus:border-brand shadow-sm" placeholder="Add details here..."></textarea>
+            <textarea id="notesInput" class="w-full p-4 bg-white rounded-2xl border border-gray-100 font-medium text-gray-700 h-24 resize-none focus:ring-brand focus:border-brand shadow-sm" placeholder="Add details here..."></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-4 pt-2">
@@ -222,57 +250,21 @@
         <h2 class="text-2xl font-extrabold mb-4">History</h2>
         <div class="bg-white/20 backdrop-blur-md p-2 rounded-2xl border border-white/30 flex items-center gap-2 pl-4 focus-within:bg-white/30 transition">
             <i class="fa-solid fa-magnifying-glass text-white/70"></i>
-            <input type="text" placeholder="Search activities..." class="bg-transparent w-full focus:outline-none text-sm font-medium text-white placeholder-white/60 py-2">
+            <input type="text" id="searchInput" oninput="searchHistory(this.value)" placeholder="Search activities..." class="bg-transparent w-full focus:outline-none text-sm font-medium text-white placeholder-white/60 py-2">
         </div>
     </div>
 
-    <div class="space-y-4 px-6 mt-4">
-        <div onclick="nav('details')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer group hover:border-brand/30 transition active:scale-[0.98]">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition">
-                    <i class="fa-solid fa-person-swimming"></i>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg text-gray-800 mb-1">Swimming</h4>
-                    <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                        <span><i class="fa-regular fa-calendar mr-1"></i>Yesterday</span>
-                        <span>•</span>
-                        <span><i class="fa-regular fa-clock mr-1"></i>45 mins</span>
-                    </div>
-                </div>
-            </div>
-            <div class="text-right">
-                <span class="block font-extrabold text-brand text-lg">320</span>
-                <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
-            </div>
-        </div>
+    <div class="space-y-4 px-6 mt-4" id="historyList">
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer group hover:border-accent-orange/30 transition active:scale-[0.98]">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-500 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition">
-                    <i class="fa-solid fa-person-biking"></i>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg text-gray-800 mb-1">Cycling</h4>
-                    <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                        <span><i class="fa-regular fa-calendar mr-1"></i>Oct 24</span>
-                        <span>•</span>
-                        <span><i class="fa-solid fa-route mr-1"></i>12km</span>
-                    </div>
-                </div>
-            </div>
-            <div class="text-right">
-                <span class="block font-extrabold text-accent-orange text-lg">450</span>
-                <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
-            </div>
-        </div>
+        <p class="text-center text-gray-400 mt-10">Loading history...</p>
+
     </div>
 </section>
 
 <section id="details" class="page flex-1 overflow-y-auto no-scrollbar bg-white relative pb-24">
 
     <div class="h-80 bg-gray-200 relative">
-        <img src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover">
+        <img id="latestImage" src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
         <button onclick="nav('history')" class="absolute top-12 left-6 w-10 h-10 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white flex items-center justify-center z-50">
@@ -280,9 +272,9 @@
         </button>
 
         <div class="absolute bottom-10 left-6 text-white z-20">
-            <div class="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block mb-3 shadow-sm border border-white/20">Swimming</div>
-            <h1 class="text-4xl font-extrabold mb-2">Morning Swim</h1>
-            <p class="text-sm opacity-90 font-medium flex items-center"><i class="fa-solid fa-location-dot mr-2 text-brand-light"></i> City Sports Complex</p>
+            <div id="latestTag" class="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block mb-3 shadow-sm border border-white/20">--</div>
+            <h1 id="latestTitle" class="text-4xl font-extrabold mb-2">--</h1>
+            <p id="latestDate" class="text-sm opacity-90 font-medium flex items-center"><i class="fa-solid fa-calendar mr-2 text-brand-light"></i> --</p>
         </div>
     </div>
 
@@ -291,28 +283,28 @@
         <div class="flex justify-between mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
             <div class="text-center flex-1 border-r border-gray-200">
                 <i class="fa-regular fa-clock text-brand mb-2 text-xl"></i>
-                <p class="font-extrabold text-xl text-gray-800 leading-none">45<span class="text-sm font-medium text-gray-500 ml-1">m</span></p>
+                <p class="font-extrabold text-xl text-gray-800 leading-none"><span id="latestDuration">0</span><span class="text-sm font-medium text-gray-500 ml-1">m</span></p>
             </div>
             <div class="text-center flex-1 border-r border-gray-200">
                 <i class="fa-solid fa-fire-flame-curved text-accent-orange mb-2 text-xl"></i>
-                <p class="font-extrabold text-xl text-gray-800 leading-none">320</p>
+                <p class="font-extrabold text-xl text-gray-800 leading-none" id="latestCalories">0</p>
             </div>
             <div class="text-center flex-1">
                 <span class="text-3xl mb-1 block">😄</span>
-                <p class="font-bold text-sm text-gray-600">Mood</p>
+                <p class="font-bold text-sm text-gray-600" id="latestMood">Mood</p>
             </div>
         </div>
 
         <h3 class="font-bold text-lg mb-3 text-gray-800 px-1">Notes</h3>
         <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 mb-8">
-            <p class="text-gray-600 text-sm leading-relaxed font-medium">Felt great today! The water was perfect. Improved lap time by 5 seconds on the freestyle set.</p>
+            <p id="latestNotes" class="text-gray-600 text-sm leading-relaxed font-medium">No notes available.</p>
         </div>
 
         <div class="flex gap-4">
-            <button class="flex-1 bg-brand text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 active:scale-95 transition">
+            <button id="btnUpdateLatest" class="flex-1 bg-brand text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 active:scale-95 transition">
                 <i class="fa-solid fa-pen-to-square"></i> Update Record
             </button>
-            <button class="w-16 bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center text-xl hover:bg-red-100 transition active:scale-95">
+            <button id="btnDeleteLatest" class="w-16 bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center text-xl hover:bg-red-100 transition active:scale-95">
                 <i class="fa-regular fa-trash-can"></i>
             </button>
         </div>
@@ -406,31 +398,48 @@
 </nav>
 
 <script>
+    // --- 5. LOGIC: TOAST NOTIFICATIONS ---
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const iconContainer = document.getElementById('toastIcon');
+        const title = document.getElementById('toastTitle');
+        const msg = document.getElementById('toastMessage');
+
+        if (type === 'success') {
+            iconContainer.className = "w-10 h-10 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xl";
+            iconContainer.innerHTML = '<i class="fa-solid fa-check"></i>';
+            title.innerText = "Success";
+        } else {
+            iconContainer.className = "w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl";
+            iconContainer.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            title.innerText = "Error";
+        }
+
+        msg.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    }
+
+    let currentActivities = [];
+
+    // --- 6. LOGIC: NAVIGATION (AUTO-LOAD) ---
     function nav(pageId) {
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
 
+        if (pageId === 'history') loadHistory();
+        if (pageId === 'details') loadLatest(); // Load dynamic latest page
+
         document.querySelectorAll('.nav-btn').forEach(btn => {
             const icon = btn.querySelector('i');
             const text = btn.querySelector('span');
-            if(icon) {
-                icon.classList.remove('nav-icon-active', 'text-brand');
-                icon.classList.add('text-gray-300');
-            }
-            if(text) {
-                 text.classList.remove('text-brand');
-                 text.classList.add('text-gray-400');
-            }
+
+            if(icon) { icon.classList.remove('nav-icon-active', 'text-brand'); icon.classList.add('text-gray-300'); }
+            if(text) { text.classList.remove('text-brand'); text.classList.add('text-gray-400'); }
 
             if(btn.dataset.target === pageId) {
-                if(icon) {
-                    icon.classList.remove('text-gray-300');
-                    icon.classList.add('nav-icon-active', 'text-brand');
-                }
-                if(text) {
-                     text.classList.remove('text-gray-400');
-                     text.classList.add('text-brand');
-                }
+                if(icon) { icon.classList.remove('text-gray-300'); icon.classList.add('nav-icon-active', 'text-brand'); }
+                if(text) { text.classList.remove('text-gray-400'); text.classList.add('text-brand'); }
             }
         });
         window.scrollTo(0,0);
@@ -473,6 +482,257 @@
     });
 
     nav('home');
+
+    function selectType(btn, type) {
+        document.getElementById('typeInput').value = type;
+        document.querySelectorAll('.type-btn').forEach(b => {
+            b.className = "type-btn p-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-600 transition";
+        });
+        btn.className = "type-btn p-4 rounded-2xl border-2 border-brand bg-brand/10 text-brand font-bold text-sm shadow-sm";
+    }
+
+    // --- 7. LOGIC: SAVE (ADD/UPDATE) ---
+    function saveActivity(event) {
+        event.preventDefault();
+
+        const editId = document.getElementById('editId').value;
+        let API_URL = "http://10.0.2.2/backend/create_activity.php";
+        if (editId) {
+            API_URL = "http://10.0.2.2/backend/update_activity.php";
+        }
+
+        const activityData = {
+            id: editId,
+            date: document.getElementById('dateInput').value,
+            type: document.getElementById('typeInput').value,
+            duration: document.getElementById('durationInput').value,
+            calories: document.getElementById('caloriesInput').value,
+            water: document.getElementById('waterInput').value,
+            mood: document.getElementById('moodInput').value,
+            notes: document.getElementById('notesInput').value
+        };
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activityData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "success") {
+                showToast(editId ? "Record updated!" : "Activity saved!");
+                document.getElementById('addForm').reset();
+                document.getElementById('editId').value = "";
+                document.querySelector("button[type='submit']").innerText = "Save Activity";
+                nav('history');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showToast("Connection Failed", 'error');
+        });
+    }
+
+    // --- 8. LOGIC: LOAD HISTORY ---
+    function loadHistory() {
+        const GET_API_URL = "http://10.0.2.2/backend/get_activities.php";
+        const container = document.getElementById('historyList');
+
+        container.innerHTML = '<p class="text-center text-gray-400 mt-10">Loading history...</p>';
+
+        fetch(GET_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            container.innerHTML = '';
+            if (Array.isArray(data)) {
+                currentActivities = data;
+            } else if (data.status === "success" && Array.isArray(data.data)) {
+                currentActivities = data.data;
+            }
+
+            if (currentActivities.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 mt-10">No activities found.</p>';
+            } else {
+                currentActivities.forEach(item => {
+                    let iconClass = "fa-person-walking";
+                    let colorClass = "bg-purple-100 text-purple-600";
+                    if(item.activity_type === 'Run') { iconClass = "fa-person-running"; }
+                    if(item.activity_type === 'Yoga') { iconClass = "fa-child-reaching"; colorClass = "bg-orange-100 text-orange-500"; }
+                    if(item.activity_type === 'Gym') { iconClass = "fa-dumbbell"; colorClass = "bg-blue-100 text-blue-500"; }
+
+                    const card = `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between mb-4 relative">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center text-2xl shadow-sm">
+                                <i class="fa-solid ${iconClass}"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800 mb-1">${item.activity_type}</h4>
+                                <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                                    <span>${item.activity_date}</span>
+                                    <span>•</span>
+                                    <span>${item.duration}m</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="block font-extrabold text-brand text-lg text-right">${item.calories}</span>
+                            <div class="flex gap-2">
+                                <button onclick="startEdit(${item.id})" class="text-blue-400 hover:text-blue-600 text-sm px-2 py-1 border border-blue-100 rounded-lg bg-blue-50">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="deleteActivity(${item.id})" class="text-red-400 hover:text-red-600 text-sm px-2 py-1 border border-red-100 rounded-lg bg-red-50">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                    container.innerHTML += card;
+                });
+            }
+        })
+        .catch(error => {
+            container.innerHTML = `<p class="text-red-500 text-center">Connection Failed</p>`;
+        });
+    }
+
+    // --- 9. LOGIC: LOAD LATEST (DYNAMIC IMAGES) ---
+    function loadLatest() {
+        const GET_API_URL = "http://10.0.2.2/backend/get_activities.php";
+        fetch(GET_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            let list = [];
+            if (Array.isArray(data)) list = data;
+            else if (data.status === "success" && Array.isArray(data.data)) list = data.data;
+
+            if (list.length === 0) {
+                document.getElementById('latestTitle').innerText = "No Data";
+                return;
+            }
+
+            const latest = list[0];
+            document.getElementById('latestTitle').innerText = latest.activity_type;
+            document.getElementById('latestTag').innerText = latest.activity_type;
+            document.getElementById('latestDate').innerHTML = `<i class="fa-solid fa-calendar mr-2 text-brand-light"></i> ${latest.activity_date}`;
+            document.getElementById('latestDuration').innerText = latest.duration;
+            document.getElementById('latestCalories').innerText = latest.calories;
+            document.getElementById('latestMood').innerText = latest.mood;
+            document.getElementById('latestNotes').innerText = latest.notes || "No notes available.";
+
+            // Dynamic Image
+            const img = document.getElementById('latestImage');
+            if (latest.activity_type === 'Run') {
+                img.src = "https://images.unsplash.com/photo-1552674605-46d526703551?auto=format&fit=crop&w=800&q=80";
+            } else if (latest.activity_type === 'Yoga') {
+                // put yoga image link here
+                img.src = "https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&w=800&q=80";
+            } else if (latest.activity_type === 'Gym') {
+                // put gym image link here
+                img.src = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80";
+            }
+
+            document.getElementById('btnUpdateLatest').onclick = function() { startEdit(latest.id); };
+            document.getElementById('btnDeleteLatest').onclick = function() { deleteActivity(latest.id); };
+        });
+    }
+
+    // --- 10. LOGIC: DELETE ---
+    function deleteActivity(id) {
+        if(!confirm("Delete this record?")) return;
+        const DELETE_API_URL = "http://10.0.2.2/backend/delete_activity.php";
+
+        fetch(DELETE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "success") {
+                showToast("Deleted successfully!");
+                loadHistory();
+                nav('history');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => { showToast("Connection Failed", 'error'); });
+    }
+
+    // --- 11. LOGIC: START EDIT ---
+    function startEdit(id) {
+        const item = currentActivities.find(a => a.id == id);
+        if (!item) return;
+
+        document.getElementById('editId').value = item.id;
+        document.getElementById('dateInput').value = item.activity_date;
+        document.getElementById('durationInput').value = item.duration;
+        document.getElementById('caloriesInput').value = item.calories;
+        document.getElementById('waterInput').value = item.water_intake;
+        document.getElementById('moodInput').value = item.mood;
+        document.getElementById('notesInput').value = item.notes;
+
+        selectType(document.querySelector("button"), item.activity_type);
+        document.querySelector("button[type='submit']").innerText = "Update Activity";
+        nav('add');
+    }
+
+    // --- 12. LOGIC: SEARCH ---
+    function searchHistory(query) {
+        const lowerCaseQuery = query.toLowerCase();
+        const filteredData = currentActivities.filter(item => {
+            return (item.notes && item.notes.toLowerCase().includes(lowerCaseQuery)) ||
+                   (item.activity_type && item.activity_type.toLowerCase().includes(lowerCaseQuery)) ||
+                   (item.activity_date && item.activity_date.includes(lowerCaseQuery));
+        });
+
+        const container = document.getElementById('historyList');
+        container.innerHTML = '';
+        if (filteredData.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-400 mt-10">No matching results.</p>';
+            return;
+        }
+
+        filteredData.forEach(item => {
+             let iconClass = "fa-person-walking";
+             let colorClass = "bg-purple-100 text-purple-600";
+             if(item.activity_type === 'Run') { iconClass = "fa-person-running"; }
+             if(item.activity_type === 'Yoga') { iconClass = "fa-child-reaching"; colorClass = "bg-orange-100 text-orange-500"; }
+             if(item.activity_type === 'Gym') { iconClass = "fa-dumbbell"; colorClass = "bg-blue-100 text-blue-500"; }
+
+             const card = `
+             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between mb-4 relative">
+                 <div class="flex items-center gap-4">
+                     <div class="w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center text-2xl shadow-sm">
+                         <i class="fa-solid ${iconClass}"></i>
+                     </div>
+                     <div>
+                         <h4 class="font-bold text-lg text-gray-800 mb-1">${item.activity_type}</h4>
+                         <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                             <span>${item.activity_date}</span>
+                             <span>•</span>
+                             <span>${item.duration}m</span>
+                         </div>
+                     </div>
+                 </div>
+
+                 <div class="flex flex-col items-end gap-2">
+                     <span class="block font-extrabold text-brand text-lg text-right">${item.calories}</span>
+                     <div class="flex gap-2">
+                         <button onclick="startEdit(${item.id})" class="text-blue-400 hover:text-blue-600 text-sm px-2 py-1 border border-blue-100 rounded-lg bg-blue-50">
+                             <i class="fa-solid fa-pen"></i>
+                         </button>
+                         <button onclick="deleteActivity(${item.id})" class="text-red-400 hover:text-red-600 text-sm px-2 py-1 border border-red-100 rounded-lg bg-red-50">
+                             <i class="fa-regular fa-trash-can"></i>
+                         </button>
+                     </div>
+                 </div>
+             </div>`;
+             container.innerHTML += card;
+        });
+    }
 </script>
 </body>
 </html>

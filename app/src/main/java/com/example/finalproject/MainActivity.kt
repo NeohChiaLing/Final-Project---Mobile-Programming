@@ -2,6 +2,7 @@ package com.example.finalproject
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.webkit.WebChromeClient // IMPORT ADDED HERE
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -26,9 +27,14 @@ class MainActivity : ComponentActivity() {
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true // For LocalStorage
         webSettings.allowFileAccess = true
+        // Enable Mixed Content (Helps if images are HTTP but app is HTTPS)
+        webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
         // Ensure links open inside the app, not Chrome
         webView.webViewClient = WebViewClient()
+
+        // 1. THIS IS THE NEW LINE THAT FIXES THE ALERTS!
+        webView.webChromeClient = WebChromeClient()
 
         // Load the HTML file from the assets folder
         webView.loadUrl("file:///android_asset/index.html")
