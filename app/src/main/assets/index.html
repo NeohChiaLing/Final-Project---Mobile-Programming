@@ -411,7 +411,11 @@
 </nav>
 
 <script>
-    // --- 5. LOGIC: TOAST NOTIFICATIONS ---
+    // --- 1. GLOBAL SETTINGS ---
+    // ✅ THIS IS THE FIX: We define the correct folder name here once.
+    const BASE_URL = "http://192.168.0.12/fittrack_api";
+
+    // --- 2. TOAST NOTIFICATIONS ---
     function showToast(message, type = 'success') {
         const toast = document.getElementById('toast');
         const iconContainer = document.getElementById('toastIcon');
@@ -435,14 +439,14 @@
 
     let currentActivities = [];
 
-    // --- 6. LOGIC: NAVIGATION (AUTO-LOAD) ---
+    // --- 3. NAVIGATION ---
     function nav(pageId) {
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
 
         if (pageId === 'home') loadWeather();
         if (pageId === 'history') loadHistory();
-        if (pageId === 'details') loadLatest(); // Load dynamic latest page
+        if (pageId === 'details') loadLatest();
 
         document.querySelectorAll('.nav-btn').forEach(btn => {
             const icon = btn.querySelector('i');
@@ -459,6 +463,7 @@
         window.scrollTo(0,0);
     }
 
+    // --- 4. CHART ---
     const ctx = document.getElementById('fitnessChart').getContext('2d');
     let gradient = ctx.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, 'rgba(139, 92, 246, 0.2)');
@@ -505,199 +510,203 @@
         btn.className = "type-btn p-4 rounded-2xl border-2 border-brand bg-brand/10 text-brand font-bold text-sm shadow-sm";
     }
 
-    // --- 7. LOGIC: SAVE (ADD/UPDATE) ---
-function saveActivity(event) {
-    event.preventDefault();
+    // --- 5. SAVE ACTIVITY (Updated with BASE_URL) ---
+    // --- 5. SAVE ACTIVITY (Fixed Error Handling) ---
+    function saveActivity(event) {
+        event.preventDefault();
 
-    const editId = document.getElementById('editId').value;
-    let API_URL = "http://10.0.2.2/backend/create_activity.php";
-    if (editId) {
-        API_URL = "http://10.0.2.2/backend/update_activity.php";
-    }
-
-    const activityData = {
-        id: editId,
-        date: document.getElementById('dateInput').value,
-        type: document.getElementById('typeInput').value,
-        duration: document.getElementById('durationInput').value,
-        calories: document.getElementById('caloriesInput').value,
-        water: document.getElementById('waterInput').value,
-        mood: document.getElementById('moodInput').value,
-        notes: document.getElementById('notesInput').value,
-        image: currentImageBase64 // <--- NEW: SEND THE IMAGE
-    };
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activityData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === "success") {
-            showToast(editId ? "Record updated!" : "Activity saved!");
-
-            document.getElementById('addForm').reset();
-            clearPhoto(); // <--- NEW: Clear the photo preview
-            document.getElementById('editId').value = "";
-            document.querySelector("button[type='submit']").innerText = "Save Activity";
-
-            nav('history');
-        } else {
-            showToast(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        showToast("Connection Failed", 'error');
-    });
-}
-
-   // --- 8. LOGIC: LOAD HISTORY (WITH IMAGE SUPPORT) ---
-function loadHistory() {
-    const GET_API_URL = "http://10.0.2.2/backend/get_activities.php";
-    const container = document.getElementById('historyList');
-
-    container.innerHTML = '<p class="text-center text-gray-400 mt-10">Loading history...</p>';
-
-    fetch(GET_API_URL)
-    .then(response => response.json())
-    .then(data => {
-        container.innerHTML = '';
-        if (Array.isArray(data)) {
-            currentActivities = data;
-        } else if (data.status === "success" && Array.isArray(data.data)) {
-            currentActivities = data.data;
+        const editId = document.getElementById('editId').value;
+        // ✅ FIX: Use BASE_URL
+        let API_URL = `${BASE_URL}/create_activity.php`;
+        if (editId) {
+            API_URL = `${BASE_URL}/update_activity.php`;
         }
 
-        if (currentActivities.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-400 mt-10">No activities found.</p>';
-        } else {
-            currentActivities.forEach(item => {
-                let iconClass = "fa-person-walking";
-                let colorClass = "bg-purple-100 text-purple-600";
-                if(item.activity_type === 'Run') { iconClass = "fa-person-running"; }
-                if(item.activity_type === 'Yoga') { iconClass = "fa-child-reaching"; colorClass = "bg-orange-100 text-orange-500"; }
-                if(item.activity_type === 'Gym') { iconClass = "fa-dumbbell"; colorClass = "bg-blue-100 text-blue-500"; }
-
-                // --- NEW: CHECK FOR IMAGE ---
-                let imageHtml = "";
-                // Check if image exists and is a valid long string (base64)
-                if (item.image && item.image.length > 100) {
-                    imageHtml = `<img src="${item.image}" class="w-full h-32 object-cover rounded-xl mt-3 border border-gray-100">`;
-                }
-
-                const card = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col mb-4 relative">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center text-2xl shadow-sm">
-                                <i class="fa-solid ${iconClass}"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg text-gray-800 mb-1">${item.activity_type}</h4>
-                                <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                                    <span>${item.activity_date}</span>
-                                    <span>•</span>
-                                    <span>${item.duration}m</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="block font-extrabold text-brand text-lg">${item.calories}</span>
-                            <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
-                        </div>
-                    </div>
-
-                    ${imageHtml}
-
-                    <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-50">
-                        <button onclick="startEdit(${item.id})" class="text-blue-400 hover:text-blue-600 text-sm px-3 py-1.5 border border-blue-100 rounded-lg bg-blue-50">
-                            <i class="fa-solid fa-pen mr-1"></i> Edit
-                        </button>
-                        <button onclick="deleteActivity(${item.id})" class="text-red-400 hover:text-red-600 text-sm px-3 py-1.5 border border-red-100 rounded-lg bg-red-50">
-                            <i class="fa-regular fa-trash-can mr-1"></i> Delete
-                        </button>
-                    </div>
-                </div>`;
-
-                container.innerHTML += card;
-            });
-        }
-    })
-    .catch(error => {
-        container.innerHTML = `<p class="text-red-500 text-center">Connection Failed</p>`;
-    });
-}
-
-// --- 9. LOGIC: LOAD LATEST (WITH ERROR PROTECTION) ---
-function loadLatest() {
-    const GET_API_URL = "http://10.0.2.2/backend/get_activities.php";
-
-    fetch(GET_API_URL)
-    .then(response => response.json())
-    .then(data => {
-        let list = [];
-        if (Array.isArray(data)) list = data;
-        else if (data.status === "success" && Array.isArray(data.data)) list = data.data;
-
-        if (list.length === 0) {
-            document.getElementById('latestTitle').innerText = "No Data";
-            return;
-        }
-
-        const latest = list[0];
-
-        // Update Text Fields
-        document.getElementById('latestTitle').innerText = latest.activity_type;
-        document.getElementById('latestTag').innerText = latest.activity_type;
-        document.getElementById('latestDate').innerHTML = `<i class="fa-solid fa-calendar mr-2 text-brand-light"></i> ${latest.activity_date}`;
-        document.getElementById('latestDuration').innerText = latest.duration;
-        document.getElementById('latestCalories').innerText = latest.calories;
-        document.getElementById('latestMood').innerText = latest.mood;
-        document.getElementById('latestNotes').innerText = latest.notes || "No notes available.";
-
-        // --- ROBUST IMAGE LOGIC ---
-        const img = document.getElementById('latestImage');
-
-        // 1. Define the correct Default Image based on type
-        let defaultUrl = "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=800&q=80"; // Fallback (Swimming)
-
-        if (latest.activity_type === 'Run') {
-            defaultUrl = "https://images.unsplash.com/photo-1552674605-46d526703551?auto=format&fit=crop&w=800&q=80";
-        } else if (latest.activity_type === 'Yoga') {
-            defaultUrl = "https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&w=800&q=80";
-        } else if (latest.activity_type === 'Gym') {
-            defaultUrl = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80";
-        }
-
-        // 2. Add an Error Listener BEFORE setting the source
-        // If the User Photo fails to load (blank), this runs immediately and fixes it!
-        img.onerror = function() {
-            console.log("User photo failed to load. Reverting to default.");
-            this.src = defaultUrl;
-            // Remove the listener to prevent infinite loops if default also fails
-            this.onerror = null;
+        const activityData = {
+            id: editId,
+            date: document.getElementById('dateInput').value,
+            type: document.getElementById('typeInput').value,
+            duration: document.getElementById('durationInput').value,
+            calories: document.getElementById('caloriesInput').value,
+            water: document.getElementById('waterInput').value,
+            mood: document.getElementById('moodInput').value,
+            notes: document.getElementById('notesInput').value,
+            image: currentImageBase64
         };
 
-        // 3. Try to load the User Photo
-        if (latest.image && latest.image.length > 200) {
-            img.src = latest.image;
-        } else {
-            // If no user photo exists, load default immediately
-            img.src = defaultUrl;
-        }
+        // Show loading state
+        const btn = document.querySelector("button[type='submit']");
+        const originalText = btn.innerText;
+        btn.innerText = "Saving...";
+        btn.disabled = true;
 
-        // Connect Buttons
-        document.getElementById('btnUpdateLatest').onclick = function() { startEdit(latest.id); };
-        document.getElementById('btnDeleteLatest').onclick = function() { deleteActivity(latest.id); };
-    })
-    .catch(error => console.error("Error loading latest:", error));
-}
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activityData)
+        })
+        .then(response => response.text()) // <--- CHANGE: Get text first, not direct JSON
+        .then(text => {
+            try {
+                // Try to parse the text as JSON
+                const data = JSON.parse(text);
 
-    // --- 10. LOGIC: DELETE ---
+                if(data.status === "success") {
+                    showToast(editId ? "Record updated!" : "Activity saved!");
+                    document.getElementById('addForm').reset();
+                    clearPhoto();
+                    document.getElementById('editId').value = "";
+                    document.querySelector("button[type='submit']").innerText = "Save Activity";
+                    nav('history');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (e) {
+                // If parsing fails, it means PHP returned an HTML error (like a Crash)
+                console.error("Server Error Raw:", text);
+                // Alert the raw HTML so you can read the error on your phone
+                alert("Server Error: " + text.substring(0, 300));
+            }
+        })
+        .catch(error => {
+            console.error("Save Error:", error);
+            showToast("Connection Failed", 'error');
+        })
+        .finally(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+
+
+   // --- 6. LOAD HISTORY (Updated with BASE_URL) ---
+    function loadHistory() {
+        // ✅ FIX: Use BASE_URL
+        const GET_API_URL = `${BASE_URL}/get_activities.php`;
+        const container = document.getElementById('historyList');
+
+        container.innerHTML = '<p class="text-center text-gray-400 mt-10">Loading history...</p>';
+
+        fetch(GET_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            container.innerHTML = '';
+            let list = [];
+            if (Array.isArray(data)) list = data;
+            else if (data.status === "success" && Array.isArray(data.data)) list = data.data;
+
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 mt-10">No activities found.</p>';
+            } else {
+                currentActivities = list; // Update global list
+                list.forEach(item => {
+                    let iconClass = "fa-person-walking";
+                    let colorClass = "bg-purple-100 text-purple-600";
+                    if(item.activity_type === 'Run') { iconClass = "fa-person-running"; }
+                    if(item.activity_type === 'Yoga') { iconClass = "fa-child-reaching"; colorClass = "bg-orange-100 text-orange-500"; }
+                    if(item.activity_type === 'Gym') { iconClass = "fa-dumbbell"; colorClass = "bg-blue-100 text-blue-500"; }
+
+                    let imageHtml = "";
+                    if (item.image && item.image.length > 100) {
+                        imageHtml = `<img src="${item.image}" class="w-full h-32 object-cover rounded-xl mt-3 border border-gray-100">`;
+                    }
+
+                    const card = `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col mb-4 relative">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center text-2xl shadow-sm">
+                                    <i class="fa-solid ${iconClass}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-lg text-gray-800 mb-1">${item.activity_type}</h4>
+                                    <div class="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                                        <span>${item.activity_date}</span>
+                                        <span>•</span>
+                                        <span>${item.duration}m</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="block font-extrabold text-brand text-lg">${item.calories}</span>
+                                <span class="text-xs text-gray-400 font-medium uppercase">Kcal</span>
+                            </div>
+                        </div>
+                        ${imageHtml}
+                        <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-50">
+                            <button onclick="startEdit(${item.id})" class="text-blue-400 hover:text-blue-600 text-sm px-3 py-1.5 border border-blue-100 rounded-lg bg-blue-50">
+                                <i class="fa-solid fa-pen mr-1"></i> Edit
+                            </button>
+                            <button onclick="deleteActivity(${item.id})" class="text-red-400 hover:text-red-600 text-sm px-3 py-1.5 border border-red-100 rounded-lg bg-red-50">
+                                <i class="fa-regular fa-trash-can mr-1"></i> Delete
+                            </button>
+                        </div>
+                    </div>`;
+                    container.innerHTML += card;
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Load History Error:", error);
+            container.innerHTML = `<p class="text-red-500 text-center">Connection Failed</p>`;
+        });
+    }
+
+    // --- 7. LOAD LATEST (Updated with BASE_URL) ---
+    function loadLatest() {
+        // ✅ FIX: Use BASE_URL
+        const GET_API_URL = `${BASE_URL}/get_activities.php`;
+
+        fetch(GET_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            let list = [];
+            if (Array.isArray(data)) list = data;
+            else if (data.status === "success" && Array.isArray(data.data)) list = data.data;
+
+            if (list.length === 0) {
+                document.getElementById('latestTitle').innerText = "No Data";
+                return;
+            }
+
+            const latest = list[0];
+            document.getElementById('latestTitle').innerText = latest.activity_type;
+            document.getElementById('latestTag').innerText = latest.activity_type;
+            document.getElementById('latestDate').innerHTML = `<i class="fa-solid fa-calendar mr-2 text-brand-light"></i> ${latest.activity_date}`;
+            document.getElementById('latestDuration').innerText = latest.duration;
+            document.getElementById('latestCalories').innerText = latest.calories;
+            document.getElementById('latestMood').innerText = latest.mood;
+            document.getElementById('latestNotes').innerText = latest.notes || "No notes available.";
+
+            const img = document.getElementById('latestImage');
+            let defaultUrl = "https://images.unsplash.com/photo-1530549387789-4c1017266635";
+
+            if (latest.activity_type === 'Run') defaultUrl = "https://images.unsplash.com/photo-1552674605-46d526703551";
+            if (latest.activity_type === 'Yoga') defaultUrl = "https://images.unsplash.com/photo-1544367563-12123d8965cd";
+            if (latest.activity_type === 'Gym') defaultUrl = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48";
+
+            img.onerror = function() {
+                this.src = defaultUrl;
+                this.onerror = null;
+            };
+
+            if (latest.image && latest.image.length > 200) {
+                img.src = latest.image;
+            } else {
+                img.src = defaultUrl;
+            }
+
+            document.getElementById('btnUpdateLatest').onclick = function() { startEdit(latest.id); };
+            document.getElementById('btnDeleteLatest').onclick = function() { deleteActivity(latest.id); };
+        })
+        .catch(error => console.error("Error loading latest:", error));
+    }
+
+    // --- 8. DELETE ACTIVITY (Updated with BASE_URL) ---
     function deleteActivity(id) {
         if(!confirm("Delete this record?")) return;
-        const DELETE_API_URL = "http://10.0.2.2/backend/delete_activity.php";
+        // ✅ FIX: Use BASE_URL
+        const DELETE_API_URL = `${BASE_URL}/delete_activity.php`;
 
         fetch(DELETE_API_URL, {
             method: 'POST',
@@ -717,52 +726,42 @@ function loadLatest() {
         .catch(error => { showToast("Connection Failed", 'error'); });
     }
 
-    // --- 11. LOGIC: START EDIT ---
-function startEdit(id) {
-    // 1. Find the item in our global list
-    const item = currentActivities.find(a => a.id == id);
-    if (!item) return;
+    // --- 9. EDIT & SEARCH (No URL changes needed) ---
+    function startEdit(id) {
+        const item = currentActivities.find(a => a.id == id);
+        if (!item) return;
 
-    // 2. Fill the form with existing data
-    document.getElementById('editId').value = item.id;
-    document.getElementById('dateInput').value = item.activity_date;
-    document.getElementById('durationInput').value = item.duration;
-    document.getElementById('caloriesInput').value = item.calories;
-    document.getElementById('waterInput').value = item.water_intake;
-    document.getElementById('moodInput').value = item.mood;
-    document.getElementById('notesInput').value = item.notes;
+        document.getElementById('editId').value = item.id;
+        document.getElementById('dateInput').value = item.activity_date;
+        document.getElementById('durationInput').value = item.duration;
+        document.getElementById('caloriesInput').value = item.calories;
+        document.getElementById('waterInput').value = item.water_intake;
+        document.getElementById('moodInput').value = item.mood;
+        document.getElementById('notesInput').value = item.notes;
 
-    // Update the water display label
-    if(document.getElementById('waterDisplay')) {
-        document.getElementById('waterDisplay').innerText = item.water_intake + 'ml';
-    }
-
-    // 3. NEW: Load existing image into preview (if it exists)
-    if (item.image && item.image.length > 100) {
-        currentImageBase64 = item.image; // Store it so we don't lose it on save
-        document.getElementById('photoPreview').src = item.image;
-        document.getElementById('previewContainer').classList.remove('hidden');
-    } else {
-        clearPhoto(); // Hide preview if no image
-    }
-
-    // 4. Select the correct Type Button (Run/Yoga/Gym)
-    const buttons = document.querySelectorAll('.type-btn');
-    buttons.forEach(btn => {
-        // Check if button text matches the activity type
-        if(btn.innerText.trim() === item.activity_type) {
-            selectType(btn, item.activity_type);
+        if(document.getElementById('waterDisplay')) {
+            document.getElementById('waterDisplay').innerText = item.water_intake + 'ml';
         }
-    });
 
-    // 5. Change button text to "Update"
-    document.querySelector("button[type='submit']").innerText = "Update Activity";
+        if (item.image && item.image.length > 100) {
+            currentImageBase64 = item.image;
+            document.getElementById('photoPreview').src = item.image;
+            document.getElementById('previewContainer').classList.remove('hidden');
+        } else {
+            clearPhoto();
+        }
 
-    // 6. Go to the Add Page
-    nav('add');
-}
+        const buttons = document.querySelectorAll('.type-btn');
+        buttons.forEach(btn => {
+            if(btn.innerText.trim() === item.activity_type) {
+                selectType(btn, item.activity_type);
+            }
+        });
 
-    // --- 12. LOGIC: SEARCH ---
+        document.querySelector("button[type='submit']").innerText = "Update Activity";
+        nav('add');
+    }
+
     function searchHistory(query) {
         const lowerCaseQuery = query.toLowerCase();
         const filteredData = currentActivities.filter(item => {
@@ -800,7 +799,6 @@ function startEdit(id) {
                          </div>
                      </div>
                  </div>
-
                  <div class="flex flex-col items-end gap-2">
                      <span class="block font-extrabold text-brand text-lg text-right">${item.calories}</span>
                      <div class="flex gap-2">
@@ -817,125 +815,75 @@ function startEdit(id) {
         });
     }
 
-  // --- LOGIC: HARDWARE ACCESS (GPS) ---
-function getGPS() {
-    if ("geolocation" in navigator) {
-        showToast("Requesting Location...", "success");
-
-        // NEW: Force the device to use the GPS hardware
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 10000, // Wait up to 10 seconds
-            maximumAge: 0   // Do not use old cached data
-        };
-
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                // Success
-                const lat = position.coords.latitude.toFixed(5);
-                const long = position.coords.longitude.toFixed(5);
-
-                const notesField = document.getElementById('notesInput');
-                const timestamp = new Date().toLocaleTimeString();
-
-                const prefix = notesField.value ? "\n" : "";
-                notesField.value += `${prefix}📍 Location: ${lat}, ${long} (${timestamp})`;
-
-                showToast("Location Added!");
-            },
-            function(error) {
-                // Error Handling
-                let errorMsg = "GPS Error";
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMsg = "User denied request for Geolocation.";
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMsg = "Location information is unavailable.";
-                        break;
-                    case error.TIMEOUT:
-                        errorMsg = "The request to get user location timed out.";
-                        break;
-                }
-                showToast(errorMsg, "error");
-                console.error("GPS Error:", error);
-            },
-            options // Pass the options here!
-        );
-    } else {
-        showToast("Geolocation is not supported by this device.", "error");
-    }
-}
-
-    // --- LOGIC: 3RD PARTY API (WEATHER) ---
-function loadWeather() {
-    // 1. Coordinates for Kuala Lumpur (or use GPS coordinates if you want advanced logic)
-    const lat = 3.1390;
-    const long = 101.6869;
-
-    // 2. Open-Meteo API URL (No Key Needed!)
-    const API_URL = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current_weather=true`;
-
-    fetch(API_URL)
-    .then(response => response.json())
-    .then(data => {
-        // 3. Extract Data
-        const temp = data.current_weather.temperature;
-        const code = data.current_weather.weathercode;
-
-        // 4. Determine Status based on code
-        let status = "Sunny";
-        let icon = "fa-sun";
-        let color = "text-yellow-500";
-        let bg = "bg-yellow-50";
-
-        // Simple mapping of WMO Weather codes
-        if (code > 3) { status = "Cloudy"; icon = "fa-cloud"; color = "text-gray-500"; bg = "bg-gray-100"; }
-        if (code > 50) { status = "Rainy"; icon = "fa-cloud-rain"; color = "text-blue-500"; bg = "bg-blue-100"; }
-        if (code > 80) { status = "Storm"; icon = "fa-bolt"; color = "text-purple-500"; bg = "bg-purple-100"; }
-
-        // 5. Update UI (Find these IDs in your HTML)
-        // Note: We need to add these IDs to your HTML first!
-        const tempElement = document.getElementById('weatherTemp');
-        const statusElement = document.getElementById('weatherStatus');
-        const iconElement = document.getElementById('weatherIconContainer');
-        const iconI = document.getElementById('weatherIcon');
-
-        if(tempElement) tempElement.innerText = temp + "°C";
-        if(statusElement) statusElement.innerText = status + " • " + "Kuala Lumpur";
-
-        // Update Icon Styles
-        if(iconElement) iconElement.className = `${bg} ${color} w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm`;
-        if(iconI) iconI.className = `fa-solid ${icon} text-xl`;
-
-    })
-    .catch(error => console.error("Weather Error:", error));
-}
-
-    // --- LOGIC: CAMERA / PHOTO HANDLING ---
-let currentImageBase64 = ""; // Stores the image string to send to DB
-
-function previewPhoto() {
-    const file = document.getElementById('photoInput').files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = function() {
-            currentImageBase64 = reader.result; // This is the string we save!
-
-            // Show Preview
-            document.getElementById('photoPreview').src = currentImageBase64;
-            document.getElementById('previewContainer').classList.remove('hidden');
-            showToast("Photo selected!");
+    function getGPS() {
+        if ("geolocation" in navigator) {
+            showToast("Requesting Location...", "success");
+            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude.toFixed(5);
+                    const long = position.coords.longitude.toFixed(5);
+                    const notesField = document.getElementById('notesInput');
+                    const timestamp = new Date().toLocaleTimeString();
+                    const prefix = notesField.value ? "\n" : "";
+                    notesField.value += `${prefix}📍 Location: ${lat}, ${long} (${timestamp})`;
+                    showToast("Location Added!");
+                },
+                function(error) { showToast("GPS Error", "error"); },
+                options
+            );
+        } else {
+            showToast("Geolocation is not supported.", "error");
         }
-        reader.readAsDataURL(file);
     }
-}
 
-function clearPhoto() {
-    document.getElementById('photoInput').value = ""; // Reset input
-    currentImageBase64 = ""; // Clear variable
-    document.getElementById('previewContainer').classList.add('hidden'); // Hide preview
-}
+    function loadWeather() {
+        const lat = 3.1390;
+        const long = 101.6869;
+        const API_URL = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current_weather=true`;
+        fetch(API_URL).then(r => r.json()).then(data => {
+            const temp = data.current_weather.temperature;
+            const code = data.current_weather.weathercode;
+            let status = "Sunny";
+            let icon = "fa-sun";
+            let color = "text-yellow-500";
+            let bg = "bg-yellow-50";
+            if (code > 3) { status = "Cloudy"; icon = "fa-cloud"; color = "text-gray-500"; bg = "bg-gray-100"; }
+            if (code > 50) { status = "Rainy"; icon = "fa-cloud-rain"; color = "text-blue-500"; bg = "bg-blue-100"; }
+            if (code > 80) { status = "Storm"; icon = "fa-bolt"; color = "text-purple-500"; bg = "bg-purple-100"; }
+
+            const tempElement = document.getElementById('weatherTemp');
+            const statusElement = document.getElementById('weatherStatus');
+            const iconElement = document.getElementById('weatherIconContainer');
+            const iconI = document.getElementById('weatherIcon');
+
+            if(tempElement) tempElement.innerText = temp + "°C";
+            if(statusElement) statusElement.innerText = status + " • " + "Kuala Lumpur";
+            if(iconElement) iconElement.className = `${bg} ${color} w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm`;
+            if(iconI) iconI.className = `fa-solid ${icon} text-xl`;
+        }).catch(error => console.error("Weather Error:", error));
+    }
+
+    let currentImageBase64 = "";
+    function previewPhoto() {
+        const file = document.getElementById('photoInput').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                currentImageBase64 = reader.result;
+                document.getElementById('photoPreview').src = currentImageBase64;
+                document.getElementById('previewContainer').classList.remove('hidden');
+                showToast("Photo selected!");
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearPhoto() {
+        document.getElementById('photoInput').value = "";
+        currentImageBase64 = "";
+        document.getElementById('previewContainer').classList.add('hidden');
+    }
 </script>
 </body>
 </html>

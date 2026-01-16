@@ -1,4 +1,5 @@
 <?php
+
 // 这是一个简单的模拟登录，用来满足作业中 "Implement PHP Sessions" 的要求
 session_start();
 header("Access-Control-Allow-Origin: *");

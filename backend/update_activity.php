@@ -1,13 +1,9 @@
 <?php
 // backend/update_activity.php
 
-// 1. Setup Error Reporting & Headers (SAME AS OLD)
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -17,24 +13,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include 'db_connect.php';
 
-// 2. Get Data
 $data = json_decode(file_get_contents("php://input"));
 
-// 3. Update Logic
 if(isset($data->id)) {
     $id = $data->id;
     $date = $data->date;
-    $type = $data->type;
+    $type = $data->type; // Correct
     $duration = $data->duration;
     $calories = $data->calories;
     $water = $data->water;
     $mood = $data->mood;
     $notes = $data->notes;
+    $image = isset($data->image) ? $data->image : ""; // Handle image
 
-    // NEW: Get the Image (If it's empty, we save an empty string, logic handled by Frontend)
-    $image = isset($data->image) ? $data->image : "";
-
-    // UPDATE SQL Query (Added 'image' column)
+    // If image is empty string, we might want to keep the old one?
+    // For now, this updates it to whatever is sent.
     $sql = "UPDATE activities SET
             activity_date='$date',
             activity_type='$type',
