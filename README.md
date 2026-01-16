@@ -129,8 +129,4 @@ const BASE_URL = "[http://192.168.0.12/fittrack_api](http://192.168.0.12/fittrac
 
 
 ```
-
-### Next Steps for You:
-Would you like me to also help you write a quick **Testing Checklist** for your group mate to ensure every feature (GPS, Camera, CRUD) works before submitting?
-
 ```
