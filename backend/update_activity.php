@@ -1,7 +1,7 @@
 <?php
 // backend/update_activity.php
 
-// 1. Setup Error Reporting & Headers
+// 1. Setup Error Reporting & Headers (SAME AS OLD)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -21,7 +21,7 @@ include 'db_connect.php';
 $data = json_decode(file_get_contents("php://input"));
 
 // 3. Update Logic
-if(isset($data->id) && isset($data->date)) {
+if(isset($data->id)) {
     $id = $data->id;
     $date = $data->date;
     $type = $data->type;
@@ -31,7 +31,10 @@ if(isset($data->id) && isset($data->date)) {
     $mood = $data->mood;
     $notes = $data->notes;
 
-    // UPDATE SQL Query
+    // NEW: Get the Image (If it's empty, we save an empty string, logic handled by Frontend)
+    $image = isset($data->image) ? $data->image : "";
+
+    // UPDATE SQL Query (Added 'image' column)
     $sql = "UPDATE activities SET
             activity_date='$date',
             activity_type='$type',
@@ -39,7 +42,8 @@ if(isset($data->id) && isset($data->date)) {
             calories='$calories',
             water_intake='$water',
             mood='$mood',
-            notes='$notes'
+            notes='$notes',
+            image='$image'
             WHERE id=$id";
 
     if ($conn->query($sql) === TRUE) {
@@ -48,7 +52,7 @@ if(isset($data->id) && isset($data->date)) {
         echo json_encode(["status" => "error", "message" => "Database Error: " . $conn->error]);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "Missing ID or Date"]);
+    echo json_encode(["status" => "error", "message" => "Missing ID"]);
 }
 
 $conn->close();
